@@ -1,6 +1,5 @@
 import numpy as np
-import torch
-import gym
+import gymnasium as gym
 import argparse
 import os
 import copy
@@ -35,7 +34,6 @@ def main(args, results_dir, models_dir, prefix):
     critic_target = copy.deepcopy(critic)
 
     top_quantiles_to_drop = args.top_quantiles_to_drop_per_net * args.n_nets
-
     trainer = Trainer(actor=actor,
                       critic=critic,
                       critic_target=critic_target,
@@ -46,6 +44,7 @@ def main(args, results_dir, models_dir, prefix):
 
     evaluations = []
     state, done = env.reset(), False
+    state = state[0]
     episode_return = 0
     episode_timesteps = 0
     episode_num = 0
@@ -53,7 +52,8 @@ def main(args, results_dir, models_dir, prefix):
     actor.train()
     for t in range(int(args.max_timesteps)):
         action = actor.select_action(state)
-        next_state, reward, done, _ = env.step(action)
+        next_state, reward, truncated, terminated, _ = env.step(action)
+        done = terminated or truncated
         episode_timesteps += 1
 
         replay_buffer.add(state, action, next_state, reward, done)
@@ -70,6 +70,7 @@ def main(args, results_dir, models_dir, prefix):
             print(f"Total T: {t + 1} Episode Num: {episode_num + 1} Episode T: {episode_timesteps} Reward: {episode_return:.3f}")
             # Reset environment
             state, done = env.reset(), False
+            state = state[0]
 
             episode_return = 0
             episode_timesteps = 0

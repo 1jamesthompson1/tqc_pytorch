@@ -8,10 +8,12 @@ def eval_policy(policy, eval_env, max_episode_steps, eval_episodes=10):
     avg_reward = 0.
     for _ in range(eval_episodes):
         state, done = eval_env.reset(), False
+        state = state[0]
         t = 0
         while not done and t < max_episode_steps:
             action = policy.select_action(state)
-            state, reward, done, _ = eval_env.step(action)
+            state, reward, terminated, truncated,  _ = eval_env.step(action)
+            done = terminated or truncated
             avg_reward += reward
             t += 1
     avg_reward /= eval_episodes

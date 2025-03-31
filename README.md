@@ -1,3 +1,7 @@
+This is fork that is being used by me to try and replicate the reuslts that Kuznetsov et al achieved in their published paper.
+
+I have changed what I think is the minimal amount of code to get it to work with the modern gym environments and with poetry package management.
+
 # Controlling Overestimation Bias with Truncated Mixture of Continuous Distributional Quantile Critics
 
 <img src="https://github.com/bayesgroup/bayesgroup.github.io/blob/master/tqc/assets/tqc/main_exps_pytorch.svg">
