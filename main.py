@@ -43,8 +43,7 @@ def main(args, results_dir, models_dir, prefix):
                       target_entropy=-np.prod(env.action_space.shape).item())
 
     eval_rewards, eval_ep_lengths, eval_timesteps = [], [], []
-    state, done = env.reset(), False
-    state = state[0]
+    (state, _), done = env.reset(), False
     episode_return = 0
     episode_timesteps = 0
     episode_num = 0
@@ -69,8 +68,7 @@ def main(args, results_dir, models_dir, prefix):
             # +1 to account for 0 indexing. +0 on ep_timesteps since it will increment +1 even if done=True
             # print(f"Total T: {t + 1} Episode Num: {episode_num + 1} Episode T: {episode_timesteps} Reward: {episode_return:.3f}")
             # Reset environment
-            state, done = env.reset(), False
-            state = state[0]
+            (state, _), done = env.reset(), False
 
             episode_return = 0
             episode_timesteps = 0
