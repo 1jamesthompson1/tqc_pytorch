@@ -1,0 +1,25 @@
+[project]
+name = "tqc"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "James",email = "1jamesthompson1@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyglet (==1.5.2)",
+    "numpy (>=2.2.4,<3.0.0)",
+    "gymnasium[mujoco] (>=1.1.1,<2.0.0)",
+    "mujoco (>=3.3.0,<4.0.0)",
+    "scipy (>=1.15.2,<2.0.0)",
+    "torch (>=2.6.0,<3.0.0)",
+    "torchvision (>=0.21.0,<0.22.0)"
+]
+package-mode = false
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

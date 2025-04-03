@@ -3,8 +3,7 @@ import torch
 from torch.nn import Module, Linear
 from torch.distributions import Distribution, Normal
 from torch.nn.functional import relu, logsigmoid
-from gym import spaces
-import gym
+import gymnasium as gym
 
 
 from tqc import DEVICE
@@ -15,13 +14,13 @@ LOG_STD_MIN_MAX = (-20, 2)
 
 class RescaleAction(gym.ActionWrapper):
     def __init__(self, env, a, b):
-        assert isinstance(env.action_space, spaces.Box), (
+        assert isinstance(env.action_space, gym.spaces.box.Box), (
             "expected Box action space, got {}".format(type(env.action_space)))
         assert np.less_equal(a, b).all(), (a, b)
         super(RescaleAction, self).__init__(env)
         self.a = np.zeros(env.action_space.shape, dtype=env.action_space.dtype) + a
         self.b = np.zeros(env.action_space.shape, dtype=env.action_space.dtype) + b
-        self.action_space = spaces.Box(low=a, high=b, shape=env.action_space.shape, dtype=env.action_space.dtype)
+        self.action_space = gym.spaces.box.Box(low=a, high=b, shape=env.action_space.shape, dtype=env.action_space.dtype)
 
     def action(self, action):
         assert np.all(np.greater_equal(action, self.a)), (action, self.a)

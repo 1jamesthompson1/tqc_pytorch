@@ -1,6 +1,5 @@
 import numpy as np
-import torch
-import gym
+import gymnasium as gym
 import argparse
 import os
 import copy
@@ -35,7 +34,6 @@ def main(args, results_dir, models_dir, prefix):
     critic_target = copy.deepcopy(critic)
 
     top_quantiles_to_drop = args.top_quantiles_to_drop_per_net * args.n_nets
-
     trainer = Trainer(actor=actor,
                       critic=critic,
                       critic_target=critic_target,
@@ -44,8 +42,8 @@ def main(args, results_dir, models_dir, prefix):
                       tau=args.tau,
                       target_entropy=-np.prod(env.action_space.shape).item())
 
-    evaluations = []
-    state, done = env.reset(), False
+    eval_rewards, eval_ep_lengths, eval_timesteps = [], [], []
+    (state, _), done = env.reset(), False
     episode_return = 0
     episode_timesteps = 0
     episode_num = 0
@@ -53,7 +51,8 @@ def main(args, results_dir, models_dir, prefix):
     actor.train()
     for t in range(int(args.max_timesteps)):
         action = actor.select_action(state)
-        next_state, reward, done, _ = env.step(action)
+        next_state, reward, truncated, terminated, _ = env.step(action)
+        done = terminated or truncated
         episode_timesteps += 1
 
         replay_buffer.add(state, action, next_state, reward, done)
@@ -67,9 +66,9 @@ def main(args, results_dir, models_dir, prefix):
 
         if done or episode_timesteps >= EPISODE_LENGTH:
             # +1 to account for 0 indexing. +0 on ep_timesteps since it will increment +1 even if done=True
-            print(f"Total T: {t + 1} Episode Num: {episode_num + 1} Episode T: {episode_timesteps} Reward: {episode_return:.3f}")
+            # print(f"Total T: {t + 1} Episode Num: {episode_num + 1} Episode T: {episode_timesteps} Reward: {episode_return:.3f}")
             # Reset environment
-            state, done = env.reset(), False
+            (state, _), done = env.reset(), False
 
             episode_return = 0
             episode_timesteps = 0
@@ -77,9 +76,13 @@ def main(args, results_dir, models_dir, prefix):
 
         # Evaluate episode
         if (t + 1) % args.eval_freq == 0:
-            file_name = f"{prefix}_{args.env}_{args.seed}"
-            evaluations.append(eval_policy(actor, eval_env, EPISODE_LENGTH))
-            np.save(results_dir / file_name, evaluations)
+            file_name = f"{prefix}_{args.env}_{args.max_timesteps}_{args.seed}"
+            rewards, ep_lengths = eval_policy(actor, eval_env, EPISODE_LENGTH)
+            eval_rewards.append(rewards)
+            eval_ep_lengths.append(ep_lengths)
+            eval_timesteps.append(t + 1)
+            print(f"Total T: {t + 1} Episode Num: {episode_num + 1} Episode T: {episode_timesteps} Reward: {np.mean(rewards):.3f}")
+            np.savez(results_dir / file_name, timesteps=eval_timesteps, results=eval_rewards, ep_lengths=eval_ep_lengths)
             if args.save_model: trainer.save(models_dir / file_name)
 
 
@@ -96,13 +99,13 @@ if __name__ == "__main__":
     parser.add_argument("--discount", default=0.99, type=float)                 # Discount factor
     parser.add_argument("--tau", default=0.005, type=float)                     # Target network update rate
     parser.add_argument("--log_dir", default='.')
-    parser.add_argument("--prefix", default='')
+    parser.add_argument("--prefix", default='tqc')
     parser.add_argument("--save_model", action="store_true")        # Save model and optimizer parameters
     args = parser.parse_args()
 
     log_dir = Path(args.log_dir)
 
-    results_dir = log_dir / 'results'
+    results_dir = log_dir / 'training_evaluations'
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
 
